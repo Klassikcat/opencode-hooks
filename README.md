@@ -1,4 +1,4 @@
-# opencode-hooks
+# Opencode-Hooks
 
 Reusable OpenCode hooks and plugins.
 
