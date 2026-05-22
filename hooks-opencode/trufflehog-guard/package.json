@@ -1,0 +1,19 @@
+{
+  "name": "opencode-trufflehog-guard-hook",
+  "version": "0.1.0",
+  "description": "OpenCode Read guard that scans each target file with trufflehog before opening it",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "scripts": {
+    "check": "node --check index.js && python3 -m py_compile trufflehog-guard.py && node scripts/smoke-test.mjs"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": ">=1.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
