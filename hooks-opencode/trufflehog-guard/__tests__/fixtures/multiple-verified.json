@@ -1,0 +1,2 @@
+{"DetectorName":"AWS","Verified":true,"Raw":"AKIAIOSFODNN7EXAMPLE","Redacted":"AKIAIOSFODNN7EXAMPLE","SourceMetadata":{"Data":{"Filesystem":{"file":"fixtures/multiple.env","line":4}}}}
+{"DetectorName":"Slack","Verified":true,"Raw":"xoxb-example-000000000000-example","Redacted":"xoxb-example-000000000000-example","SourceMetadata":{"Data":{"Filesystem":{"file":"fixtures/multiple.env","line":12}}}}
