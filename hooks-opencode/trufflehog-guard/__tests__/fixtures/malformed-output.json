@@ -1,2 +1,2 @@
-{"DetectorName":"AWS","Verified":true,"Raw":"AKIAIOSFODNN7EXAMPLE"}
+{"findings":[{"detector":"AWS","verified":true}],"wellKnown":null,"timeout":false,"scannerMissing":false,"filePath":"/tmp/test"}
 this is not valid json

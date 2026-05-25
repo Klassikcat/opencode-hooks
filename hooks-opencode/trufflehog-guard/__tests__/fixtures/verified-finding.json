@@ -1,1 +1,1 @@
-{"DetectorName":"AWS","Verified":true,"Raw":"AKIAIOSFODNN7EXAMPLE","Redacted":"AKIAIOSFODNN7EXAMPLE","SourceMetadata":{"Data":{"Filesystem":{"file":"fixtures/example.env","line":3}}}}
+{"findings":[{"detector":"AWS","verified":true}],"wellKnown":null,"timeout":false,"scannerMissing":false,"filePath":"/tmp/test"}

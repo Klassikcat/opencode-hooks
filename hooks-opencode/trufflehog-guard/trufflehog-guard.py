@@ -129,55 +129,45 @@ def matches_well_known(file_abs: str) -> str | None:
 
 def cmd_check() -> int:
     payload = decode_json_object(sys.stdin.read())
-    if payload is None or payload.get("tool_name") != "Read":
+    if payload is None:
+        print(json.dumps({"findings": [], "wellKnown": None, "timeout": False, "scannerMissing": False, "filePath": ""}))
         return 0
 
-    tool_input_raw = payload.get("tool_input")
-    if not isinstance(tool_input_raw, dict):
-        return 0
-    tool_input = cast(dict[str, object], tool_input_raw)
-    file_path_raw = tool_input.get("file_path")
+    file_path_raw = ""
+    if isinstance(payload.get("tool_input"), dict):
+        file_path_raw = payload["tool_input"].get("file_path", "")
+
     if not isinstance(file_path_raw, str) or not file_path_raw:
+        print(json.dumps({"findings": [], "wellKnown": None, "timeout": False, "scannerMissing": False, "filePath": ""}))
         return 0
 
-    reason = None
     file_abs = normalize(file_path_raw)
     well_known = matches_well_known(file_abs)
-    if well_known:
-        reason = f"Read of '{file_path_raw}' blocked: {well_known}."
 
-    if reason is None:
-        result = scan_file(file_abs)
-        findings = result.get("findings", [])
-        if findings:
-            detectors = sorted({finding["detector"] for finding in findings})
-            verified = any(finding["verified"] for finding in findings)
-            verified_suffix = ", VERIFIED live secret" if verified else ""
-            reason = (
-                f"Read of '{file_path_raw}' blocked: trufflehog detected credentials "
-                f"(detectors: {', '.join(detectors)}{verified_suffix}). "
-                f"If this is a false positive, ask the user to confirm before proceeding."
+    bin_path = trufflehog_bin()
+    if not bin_path:
+        print(
+            json.dumps(
+                {
+                    "findings": [],
+                    "wellKnown": well_known,
+                    "timeout": False,
+                    "scannerMissing": True,
+                    "filePath": file_abs,
+                }
             )
-        elif result.get("timeout"):
-            reason = (
-                f"Read of '{file_path_raw}' blocked: trufflehog timed out after "
-                f"{SCAN_TIMEOUT}s while scanning the file. Ask the user before reading."
-            )
-
-    if reason is None:
+        )
         return 0
 
-    print(
-        json.dumps(
-            {
-                "hookSpecificOutput": {
-                    "hookEventName": "PreToolUse",
-                    "permissionDecision": "deny",
-                    "permissionDecisionReason": reason,
-                }
-            }
-        )
-    )
+    result = scan_file(file_abs)
+    output = {
+        "findings": result.get("findings", []),
+        "wellKnown": well_known,
+        "timeout": result.get("timeout", False),
+        "scannerMissing": False,
+        "filePath": file_abs,
+    }
+    print(json.dumps(output))
     return 0
 
 

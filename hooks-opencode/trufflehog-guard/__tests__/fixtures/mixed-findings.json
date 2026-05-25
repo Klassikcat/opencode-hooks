@@ -1,2 +1,1 @@
-{"DetectorName":"AWS","Verified":true,"Raw":"AKIAIOSFODNN7EXAMPLE","Redacted":"AKIAIOSFODNN7EXAMPLE","SourceMetadata":{"Data":{"Filesystem":{"file":"fixtures/mixed.env","line":2}}}}
-{"DetectorName":"GitHub","Verified":false,"Raw":"ghp_example000000000000000000000000000000000","Redacted":"ghp_example000000000000000000000000000000000","SourceMetadata":{"Data":{"Filesystem":{"file":"fixtures/mixed.env","line":9}}}}
+{"findings":[{"detector":"AWS","verified":true},{"detector":"GitHub","verified":false}],"wellKnown":null,"timeout":false,"scannerMissing":false,"filePath":"/tmp/test"}
