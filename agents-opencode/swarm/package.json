@@ -1,0 +1,26 @@
+{
+  "name": "opencode-swarm-agent",
+  "version": "0.1.0",
+  "description": "Swarm agent scaffolding for OpenCode",
+  "type": "module",
+  "main": "src/cli.js",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "node --check src/cli.js && node scripts/smoke-test.mjs"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": ">=1.0.0"
+  },
+  "devDependencies": {
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "peerDependenciesMeta": {
+    "@opencode-ai/plugin": {
+      "optional": true
+    }
+  }
+}
