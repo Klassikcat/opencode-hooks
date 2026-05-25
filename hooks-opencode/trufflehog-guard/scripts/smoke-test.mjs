@@ -19,7 +19,7 @@ try {
       { args: { filePath: path.join(process.env.HOME || "", ".ssh", "nonexistent-private-key") } },
     );
   } catch (error) {
-    denied = String(error?.message || error).includes("blocked");
+    denied = String(error?.message || error).includes("deny:");
   }
 
   if (!denied) {

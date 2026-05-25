@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "CLAUDE_CODE_HOOK=1 node /absolute/path/to/opencode-hooks/hooks-opencode/trufflehog-guard/index.js",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
