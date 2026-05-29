@@ -1,14 +1,20 @@
-# OpenCode trufflehog guard hook
+# trufflehog guard hook
 
-Blocks OpenCode `Read` tool calls when the target file appears to contain credentials.
+Blocks `Read` tool calls — and `Bash` commands that would print a file's contents — when the target file appears to contain credentials.
 
 ## Behavior
 
 - Does not scan at session start.
-- Runs only immediately before a `Read` tool call.
-- Scans only the requested file with `trufflehog filesystem <file>`.
+- Runs only immediately before a `Read` tool call or a `Bash` tool call.
+- For `Read`: scans `tool_input.file_path`.
+- For `Bash`: parses the command and scans the files that content-printing commands (`cat`, `head`, `tail`, `less`, `grep`, `xxd`, `base64`, `jq`, ...) or an input redirect (`< file`) would expose. It splits on shell operators (`|`, `;`, `&&`, `||`, `&`), follows transparent wrappers (`sudo`, `nohup`, ...), and ignores write redirects (`> file`). Commands that only write, list, or move files are left alone.
+- Scans only the resolved file(s) with `trufflehog filesystem <file>`.
 - Blocks well-known sensitive local paths such as `~/.ssh`, `~/.aws/credentials`, `~/.kube/config`, and similar credential files.
 - Emits only a deny reason with detector names. It does not print raw trufflehog findings or secret values.
+
+### Bash parsing limitations
+
+The Bash parser is a best-effort compromise, not a full shell. It does not resolve variables (`$FILE`), command substitution (`$(...)`), or value-taking wrappers (`timeout 5 cat ...`, `env X=y cat ...`). Such cases fall through as a no-op (allowed). The `Read` hook remains the primary guard.
 
 ## Requirements
 

@@ -1,11 +1,19 @@
 #!/usr/bin/env python3
-"""Per-file trufflehog guard for OpenCode Read tool calls.
+"""Per-file trufflehog guard for Read and Bash tool calls.
 
 The script reads a hook payload from stdin and emits a PreToolUse deny decision
-only when the requested file is sensitive or trufflehog finds credentials in
-that exact file. It never scans the whole session directory.
+only when a requested file is sensitive or trufflehog finds credentials in that
+exact file. It never scans the whole session directory.
+
+For ``Read`` it inspects ``tool_input.file_path``.
+
+For ``Bash`` it parses the command, extracts the files that content-printing
+commands (``cat``, ``head``, ``tail`` and friends) or input redirects (``<``)
+would expose, and scans only those files. Commands that merely write, list, or
+otherwise do not stream file contents are left alone.
 """
 import json
+import shlex
 import shutil
 import subprocess
 import sys
@@ -27,6 +35,36 @@ WELL_KNOWN_SENSITIVE: list[Path] = [
     HOME / ".npmrc",
     HOME / ".pypirc",
 ]
+
+# Commands whose positional file arguments are streamed to stdout (and thus
+# into the model context). Pattern/script-first tools such as grep/sed/awk are
+# included too: their leading pattern argument is almost never an existing
+# file, so scanning it is a harmless no-op while their trailing file arguments
+# are caught correctly.
+READ_COMMANDS: frozenset[str] = frozenset(
+    {
+        "cat", "tac", "nl", "rev",
+        "head", "tail",
+        "less", "more", "most", "pg",
+        "bat", "batcat", "view",
+        "strings", "xxd", "od", "hexdump", "hd",
+        "base64", "base32", "uuencode",
+        "cut", "sort", "uniq", "comm", "paste", "join",
+        "grep", "egrep", "fgrep", "rg", "ag", "ack",
+        "sed", "awk", "gawk",
+        "fold", "fmt", "pr", "column", "expand", "unexpand",
+        "diff", "cmp",
+        "jq", "yq",
+        "dd",
+    }
+)
+
+# Transparent prefixes: skip them (and their leading flags) to reach the real
+# command. Wrappers that consume a value argument (nice -n N, timeout N, env
+# VAR=v) are intentionally omitted to avoid mis-parsing them as the command.
+WRAPPERS: frozenset[str] = frozenset(
+    {"sudo", "doas", "command", "builtin", "exec", "nohup", "time"}
+)
 
 
 class Finding(TypedDict):
@@ -127,42 +165,222 @@ def matches_well_known(file_abs: str) -> str | None:
     return None
 
 
+# ("well_known", reason) | ("secret", (detectors, verified)) | ("timeout", None) | None
+Verdict = tuple[str, object] | None
+
+
+def evaluate_file(file_abs: str) -> Verdict:
+    well_known = matches_well_known(file_abs)
+    if well_known:
+        return ("well_known", well_known)
+
+    result = scan_file(file_abs)
+    findings = result.get("findings", [])
+    if findings:
+        detectors = sorted({finding["detector"] for finding in findings})
+        verified = any(finding["verified"] for finding in findings)
+        return ("secret", (detectors, verified))
+    if result.get("timeout"):
+        return ("timeout", None)
+    return None
+
+
+def basename_cmd(token: str) -> str:
+    token = token.lstrip("\\")
+    try:
+        return Path(token).name or token
+    except Exception:
+        return token
+
+
+def segment_command(command: str) -> list[str]:
+    """Split a command line into pipeline/list segments on unquoted shell
+    control operators (``;`` ``\\n`` ``|`` ``||`` ``&`` ``&&``). Quotes and
+    backslash escapes are respected so separators inside strings do not split.
+    """
+    segments: list[str] = []
+    buf: list[str] = []
+    quote: str | None = None
+    i = 0
+    n = len(command)
+    while i < n:
+        c = command[i]
+        if quote is not None:
+            buf.append(c)
+            if c == "\\" and quote == '"' and i + 1 < n:
+                buf.append(command[i + 1])
+                i += 2
+                continue
+            if c == quote:
+                quote = None
+            i += 1
+            continue
+        if c == "\\":
+            buf.append(c)
+            if i + 1 < n:
+                buf.append(command[i + 1])
+                i += 2
+                continue
+            i += 1
+            continue
+        if c in ("'", '"'):
+            quote = c
+            buf.append(c)
+            i += 1
+            continue
+        if c in ";\n":
+            segments.append("".join(buf))
+            buf = []
+            i += 1
+            continue
+        if c == "|":
+            segments.append("".join(buf))
+            buf = []
+            i += 2 if (i + 1 < n and command[i + 1] == "|") else 1
+            continue
+        if c == "&":
+            segments.append("".join(buf))
+            buf = []
+            i += 2 if (i + 1 < n and command[i + 1] == "&") else 1
+            continue
+        buf.append(c)
+        i += 1
+    segments.append("".join(buf))
+    return segments
+
+
+def collect_segment_targets(tokens: list[str], targets: list[str]) -> None:
+    # Skip transparent wrappers and their leading flags to find the real command.
+    idx = 0
+    while idx < len(tokens):
+        if basename_cmd(tokens[idx]) in WRAPPERS:
+            idx += 1
+            while idx < len(tokens) and tokens[idx].startswith("-"):
+                idx += 1
+            continue
+        break
+    if idx >= len(tokens):
+        return
+
+    cmd = basename_cmd(tokens[idx])
+    is_reader = cmd in READ_COMMANDS
+    args = tokens[idx + 1:]
+
+    j = 0
+    while j < len(args):
+        tok = args[j]
+
+        # Output redirects (>, >>, 2>, &>, 2>file, ...): the following word is a
+        # write target, never a file we read. Skip it so it is not scanned.
+        if ">" in tok:
+            inline = tok.rsplit(">", 1)[1]
+            j += 2 if inline == "" else 1
+            continue
+
+        # Heredoc / herestring: the next word is a delimiter or literal string.
+        if tok in ("<<", "<<<"):
+            j += 2
+            continue
+
+        # Input redirect: the file feeds stdin and may be echoed to the model.
+        if tok == "<":
+            if j + 1 < len(args):
+                targets.append(args[j + 1])
+                j += 2
+                continue
+            j += 1
+            continue
+        if tok.startswith("<"):
+            targets.append(tok[1:])
+            j += 1
+            continue
+
+        if is_reader and not tok.startswith("-"):
+            if cmd == "dd":
+                if tok.startswith("if="):
+                    targets.append(tok[3:])
+            else:
+                targets.append(tok)
+        j += 1
+
+
+def extract_read_targets(command: str) -> list[str]:
+    targets: list[str] = []
+    for segment in segment_command(command):
+        if not segment.strip():
+            continue
+        try:
+            tokens = shlex.split(segment, posix=True, comments=False)
+        except ValueError:
+            continue
+        if tokens:
+            collect_segment_targets(tokens, targets)
+    return targets
+
+
+def reason_for_verdict(verb: str, display: str, verdict: Verdict) -> str | None:
+    if verdict is None:
+        return None
+    kind, detail = verdict
+    if kind == "well_known":
+        return f"{verb} of '{display}' blocked: {detail}."
+    if kind == "secret":
+        detectors, verified = cast(tuple[list[str], bool], detail)
+        verified_suffix = ", VERIFIED live secret" if verified else ""
+        return (
+            f"{verb} of '{display}' blocked: trufflehog detected credentials "
+            f"(detectors: {', '.join(detectors)}{verified_suffix}). "
+            f"If this is a false positive, ask the user to confirm before proceeding."
+        )
+    # timeout
+    return (
+        f"{verb} of '{display}' blocked: trufflehog timed out after "
+        f"{SCAN_TIMEOUT}s while scanning the file. Ask the user before reading."
+    )
+
+
+def check_read(tool_input: dict[str, object]) -> str | None:
+    file_path_raw = tool_input.get("file_path")
+    if not isinstance(file_path_raw, str) or not file_path_raw:
+        return None
+    verdict = evaluate_file(normalize(file_path_raw))
+    return reason_for_verdict("Read", file_path_raw, verdict)
+
+
+def check_bash(tool_input: dict[str, object]) -> str | None:
+    command = tool_input.get("command")
+    if not isinstance(command, str) or not command:
+        return None
+
+    seen: set[str] = set()
+    for raw in extract_read_targets(command):
+        if not raw or raw in seen:
+            continue
+        seen.add(raw)
+        verdict = evaluate_file(normalize(raw))
+        reason = reason_for_verdict("Bash command read", raw, verdict)
+        if reason is not None:
+            return reason
+    return None
+
+
 def cmd_check() -> int:
     payload = decode_json_object(sys.stdin.read())
-    if payload is None or payload.get("tool_name") != "Read":
+    if payload is None:
         return 0
 
+    tool_name = payload.get("tool_name")
     tool_input_raw = payload.get("tool_input")
     if not isinstance(tool_input_raw, dict):
         return 0
     tool_input = cast(dict[str, object], tool_input_raw)
-    file_path_raw = tool_input.get("file_path")
-    if not isinstance(file_path_raw, str) or not file_path_raw:
+
+    if tool_name == "Read":
+        reason = check_read(tool_input)
+    elif tool_name == "Bash":
+        reason = check_bash(tool_input)
+    else:
         return 0
-
-    reason = None
-    file_abs = normalize(file_path_raw)
-    well_known = matches_well_known(file_abs)
-    if well_known:
-        reason = f"Read of '{file_path_raw}' blocked: {well_known}."
-
-    if reason is None:
-        result = scan_file(file_abs)
-        findings = result.get("findings", [])
-        if findings:
-            detectors = sorted({finding["detector"] for finding in findings})
-            verified = any(finding["verified"] for finding in findings)
-            verified_suffix = ", VERIFIED live secret" if verified else ""
-            reason = (
-                f"Read of '{file_path_raw}' blocked: trufflehog detected credentials "
-                f"(detectors: {', '.join(detectors)}{verified_suffix}). "
-                f"If this is a false positive, ask the user to confirm before proceeding."
-            )
-        elif result.get("timeout"):
-            reason = (
-                f"Read of '{file_path_raw}' blocked: trufflehog timed out after "
-                f"{SCAN_TIMEOUT}s while scanning the file. Ask the user before reading."
-            )
 
     if reason is None:
         return 0
