@@ -1,0 +1,16 @@
+{
+  "name": "pi-auto-plan-review-hook",
+  "version": "0.1.0",
+  "description": "Pi (oh-my-pi) extension: pauses plan approval until a reviewer subagent has reviewed the latest plan",
+  "type": "module",
+  "main": "auto-plan-review.js",
+  "exports": {
+    ".": "./auto-plan-review.js"
+  },
+  "scripts": {
+    "check": "node --check auto-plan-review.js && node scripts/smoke-test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

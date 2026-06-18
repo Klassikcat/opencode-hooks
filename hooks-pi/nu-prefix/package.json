@@ -1,0 +1,13 @@
+{
+  "name": "pi-nu-prefix-hook",
+  "version": "0.1.0",
+  "description": "Pi (oh-my-pi) extension: rewrites '>'/'>>' input-line prefixes into a 'nu -c' bash command",
+  "type": "module",
+  "main": "nu-prefix.ts",
+  "scripts": {
+    "check": "node scripts/smoke-test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,1 +1,0 @@
-Worktree QA PASS: worktree at /home/shinjungtae/Projects/personal/opencode-hooks-trufflehog, branch: feature/trufflehog-guard-dual-compat

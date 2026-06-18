@@ -1,0 +1,41 @@
+# config.example.yml
+#
+# Sanitized example of the pi (oh-my-pi / OMP) config — normally at
+# `~/.omp/agent/config.yml` — showing the model ROLES that the bundled pi hooks
+# and agents in this repo depend on.
+#
+# The model IDs below are PLACEHOLDERS. Replace each <...> with a model available
+# to your pi install (e.g. an Anthropic, OpenAI, or OpenRouter model id, with an
+# optional :effort suffix). The role NAMES are what the bundled artifacts
+# reference — keep the names, pick your own models. Do NOT commit your real
+# config.yml; it encodes personal provider/model preferences.
+
+setupVersion: 1
+
+modelRoles:
+  # `slow`: strongest reasoning role.
+  #   Used by agents-pi/agents/code-reviewer.md (model: pi/slow) and the
+  #   completion-gate reviewer flow. Pick a capable model.
+  slow: <provider/strong-reasoning-model>
+
+  # `default`: everyday role for standard work.
+  default: <provider/standard-model>
+
+  # `smol`: fast / cheap role.
+  #   Used by agents-pi/agents/document-specialist.md (model: pi/smol).
+  smol: <provider/fast-cheap-model>
+
+  # `plan`: planning-heavy work (/plan and similar).
+  plan: <provider/planning-model>
+
+  # `task`: short delegated tasks.
+  task: <provider/fast-cheap-model>
+
+task:
+  # The completion gate's reviewer flow spawns the `code-reviewer` agent; map it
+  # to a capable model here (or let it inherit its declared `pi/slow` role).
+  agentModelOverrides:
+    code-reviewer: <provider/strong-reasoning-model>
+
+# Other personal config keys (theme, providers, lsp, disabledProviders, ...) are
+# intentionally omitted from this example — set them to taste.

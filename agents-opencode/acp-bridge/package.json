@@ -1,0 +1,15 @@
+{
+  "name": "opencode-acp-bridge",
+  "version": "0.1.0",
+  "description": "Oh My OpenCode provider bridge for fan-out calls to Claude Code, Pi, Codex, and Gemini CLI.",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "omc-acp-bridge": "./src/cli.js"
+  },
+  "scripts": {
+    "check": "node --check src/cli.js && node --test && node scripts/smoke-test.mjs",
+    "test": "node --test"
+  },
+  "keywords": ["opencode", "omc", "acp", "agent", "bridge"]
+}

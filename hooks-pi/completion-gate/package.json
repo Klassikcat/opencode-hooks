@@ -1,0 +1,16 @@
+{
+  "name": "pi-completion-gate-hook",
+  "version": "0.1.0",
+  "description": "Pi (oh-my-pi) extension: lightweight per-step quality gate for the main agent plus a return self-gate for mutating subagents",
+  "type": "module",
+  "main": "completion-gate.js",
+  "exports": {
+    ".": "./completion-gate.js"
+  },
+  "scripts": {
+    "check": "node --check completion-gate.js && node scripts/smoke-test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
