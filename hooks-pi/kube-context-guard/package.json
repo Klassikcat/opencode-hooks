@@ -1,0 +1,13 @@
+{
+  "name": "pi-kube-context-guard-hook",
+  "version": "0.1.0",
+  "description": "pi (oh-my-pi) extension that blocks bash kubectl/helm commands run against an ambient kube context (no explicit --context) for write/prod operations",
+  "type": "module",
+  "main": "kube-context-guard.pi.js",
+  "scripts": {
+    "check": "node --check kube-context-guard.pi.js && node scripts/smoke-test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

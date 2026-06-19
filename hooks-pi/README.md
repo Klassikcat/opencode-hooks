@@ -8,6 +8,7 @@ Reusable extensions ("hooks") for the [pi](https://oh-my-pi) coding agent (oh-my
 - [`auto-plan-review`](./auto-plan-review) — pauses plan approval until a reviewer subagent has reviewed the latest plan.
 - [`worktree-redirect`](./worktree-redirect) — redirects approved large/contended/non-default-branch plans into a dedicated git worktree.
 - [`nu-prefix`](./nu-prefix) — rewrites a `>` / `>>` input prefix into a `nu -c` (Nushell) bash command.
+- [`kube-context-guard`](./kube-context-guard) — blocks `bash` `kubectl`/`helm` commands run against an ambient kube context (no explicit `--context`) for write/prod operations. Reuses the shared Python core from [`../hooks-opencode/kube-context-guard`](../hooks-opencode/kube-context-guard).
 
 ## How pi loads extensions
 

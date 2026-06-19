@@ -1,0 +1,19 @@
+{
+  "name": "opencode-kube-context-guard-hook",
+  "version": "0.1.0",
+  "description": "OpenCode Bash guard that blocks kubectl/helm commands run against an ambient kube context (no explicit --context) for write/prod operations",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "scripts": {
+    "check": "node --check index.js && python3 -m py_compile kube-context-guard.py && node scripts/smoke-test.mjs"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": ">=1.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,12 @@
+# kube-context-allowlist.example
+#
+# Temporary per-session bypass. If a command contains any substring listed here,
+# the guard allows it unconditionally. One token per line; '#' starts a comment.
+#
+# Resolution order (first existing file wins):
+#   1. $OPENCODE_KUBE_GUARD_ALLOWLIST
+#   2. ~/.claude/.kube-context-allowlist
+#   3. this bundled example
+#
+# Example:
+#   echo 'my-unique-command-marker' >> ~/.claude/.kube-context-allowlist

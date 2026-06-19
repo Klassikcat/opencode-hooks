@@ -1,0 +1,20 @@
+# kube-prod-contexts.example
+#
+# Substring patterns marking a kube context as "production / dangerous". When the
+# resolved current-context matches ANY pattern below, even read commands are
+# blocked unless an explicit --context (helm: --kube-context) is given.
+#
+# One pattern per line; '#' starts a comment. Matching is plain substring.
+#
+# Resolution order used by kube-context-guard.py (first existing file wins):
+#   1. $OPENCODE_KUBE_GUARD_PROD_FILE
+#   2. ~/.claude/.kube-prod-contexts   (your private file — keep cluster ARNs/account IDs THERE, not here)
+#   3. this bundled example
+#   4. built-in defaults: prod, production, prd
+#
+# Do NOT commit real cluster names / AWS account IDs to a shared repo. Put those
+# in your private ~/.claude/.kube-prod-contexts instead. Generic defaults only:
+
+prod
+production
+prd
