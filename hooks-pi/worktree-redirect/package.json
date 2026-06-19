@@ -1,0 +1,16 @@
+{
+  "name": "pi-worktree-redirect-hook",
+  "version": "0.1.0",
+  "description": "Pi (oh-my-pi) extension: redirects approved large/contended/non-default-branch plans into a dedicated git worktree",
+  "type": "module",
+  "main": "zz-worktree-redirect.js",
+  "exports": {
+    ".": "./zz-worktree-redirect.js"
+  },
+  "scripts": {
+    "check": "node --check zz-worktree-redirect.js && node scripts/smoke-test.mjs && node scripts/unit-test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

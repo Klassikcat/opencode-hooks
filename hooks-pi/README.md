@@ -6,6 +6,7 @@ Reusable extensions ("hooks") for the [pi](https://oh-my-pi) coding agent (oh-my
 
 - [`completion-gate`](./completion-gate) — local, deterministic quality gate: a per-step gate for the main agent and a return self-gate for mutating subagents (syntax / LSP / linter checks, no session-end auditor).
 - [`auto-plan-review`](./auto-plan-review) — pauses plan approval until a reviewer subagent has reviewed the latest plan.
+- [`worktree-redirect`](./worktree-redirect) — redirects approved large/contended/non-default-branch plans into a dedicated git worktree.
 - [`nu-prefix`](./nu-prefix) — rewrites a `>` / `>>` input prefix into a `nu -c` (Nushell) bash command.
 
 ## How pi loads extensions

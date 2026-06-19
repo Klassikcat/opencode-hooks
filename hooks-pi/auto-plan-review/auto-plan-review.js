@@ -74,10 +74,21 @@ function titleFrom(plan, input) {
   return plan.name.replace(/\\.md$/i, "").replace(/-plan$/i, "");
 }
 
+function ensureResolveReason(event) {
+  if (event?.toolName !== "resolve" || event.input?.action !== "apply") return;
+  if (typeof event.input.reason === "string" && event.input.reason.trim()) return;
+  event.input.reason = "User approved the pending action.";
+}
+
+
 export default function autoPlanReview(pi) {
   pi.setLabel?.("Auto Plan Review");
 
   const reviewTickets = new Map();
+
+  pi.on("tool_call", event => {
+    ensureResolveReason(event);
+  });
 
   pi.on("tool_result", async (event, ctx) => {
     if (
