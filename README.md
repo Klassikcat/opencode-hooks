@@ -17,7 +17,6 @@ Reusable hooks, plugins, and agents for the OpenCode and pi (oh-my-pi) coding ag
 
 - `hooks-pi/completion-gate`: Local, deterministic quality gate — a per-step gate for the main agent and a return self-gate for mutating subagents (syntax/LSP/linter checks).
 - `hooks-pi/auto-plan-review`: Pauses plan approval until a reviewer subagent has reviewed the latest plan.
-- `hooks-pi/worktree-redirect`: Hands approved large/contended/non-default-branch plans off to a dedicated git worktree and starts them with `/start-work`.
 - `hooks-pi/nu-prefix`: Rewrites a `>` / `>>` input prefix into a `nu -c` (Nushell) bash command.
 - `agents-pi/agents/code-reviewer`: READ-ONLY completion reviewer agent used by the completion-gate flow.
 - `agents-pi/agents/document-specialist`: READ-ONLY external documentation lookup agent.
