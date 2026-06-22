@@ -21,6 +21,7 @@ const BRANCH_PREFIX = "omp/plan/";
 const WORKTREE_DIR_SUFFIX = ".worktrees";
 const PLAN_APPROVAL_TOOL = "plan_approval";
 const MARKER_REL = ".omp/.plan-worktree";
+const START_WORK_NAME = "start-work";
 const START_WORK_COMMAND = "/start-work";
 const BACKGROUND_TTL_MS = 15 * 60_000;
 
@@ -372,24 +373,37 @@ export function buildMissingStartWorkPrompt(cwd) {
   ].join("\n");
 }
 
+async function buildStartWorkCommandText(cwd, suppliedPlan = "") {
+  const marker = await readWorktreeMarker(cwd);
+  if (!marker) return buildMissingStartWorkPrompt(cwd);
+
+  const planRel = suppliedPlan.trim() || planRelForMarker(marker);
+  return buildStartWorkPrompt({
+    cwd,
+    marker,
+    planRel,
+    planExists: await fileExists(path.resolve(cwd, planRel)),
+  });
+}
+
 async function handleStartWorkCommand(event, ctx = {}) {
   const text = String(event?.text ?? "").trim();
   if (text !== START_WORK_COMMAND && !text.startsWith(`${START_WORK_COMMAND} `)) return;
 
   const cwd = ctx?.cwd ?? process.cwd();
   const suppliedPlan = text.slice(START_WORK_COMMAND.length).trim();
-  const marker = await readWorktreeMarker(cwd);
-  if (!marker) return { text: buildMissingStartWorkPrompt(cwd) };
+  return { text: await buildStartWorkCommandText(cwd, suppliedPlan) };
+}
 
-  const planRel = suppliedPlan || planRelForMarker(marker);
-  return {
-    text: buildStartWorkPrompt({
-      cwd,
-      marker,
-      planRel,
-      planExists: await fileExists(path.resolve(cwd, planRel)),
-    }),
-  };
+function registerStartWorkCommand(pi) {
+  if (typeof pi.registerCommand !== "function") return;
+
+  pi.registerCommand(START_WORK_NAME, {
+    description: "Start implementing the copied plan from an OMP worktree handoff.",
+    handler: async (args, ctx) => {
+      pi.sendUserMessage(await buildStartWorkCommandText(ctx.cwd, args));
+    },
+  });
 }
 
 function ensureResolveReason(event) {
@@ -403,6 +417,8 @@ export default function worktreeRedirect(pi) {
   pi.setLabel?.("Worktree Redirect");
 
   pi.on("input", handleStartWorkCommand);
+  registerStartWorkCommand(pi);
+
 
   const activity = createAgentActivity();
   const processed = new Map();

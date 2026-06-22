@@ -10,6 +10,8 @@ if (typeof worktreeRedirect !== "function") {
 }
 
 const registeredEvents = [];
+const registeredCommands = new Map();
+
 
 const pi = {
   setLabel() { },
@@ -19,6 +21,12 @@ const pi = {
     }
     registeredEvents.push(eventName);
   },
+  registerCommand(name, options) {
+    if (typeof options?.handler !== "function") {
+      throw new Error(`registerCommand("${name}") called without a handler function`);
+    }
+    registeredCommands.set(name, options);
+  },
 };
 
 worktreeRedirect(pi);
@@ -26,6 +34,11 @@ worktreeRedirect(pi);
 if (!registeredEvents.includes("input")) {
   throw new Error(`Expected an 'input' handler for /start-work; got: ${registeredEvents.join(", ")}`);
 }
+
+if (!registeredCommands.has("start-work")) {
+  throw new Error(`Expected a registered /start-work command; got: ${[...registeredCommands.keys()].join(", ")}`);
+}
+
 
 if (!registeredEvents.includes("tool_call")) {
   throw new Error(`Expected a 'tool_call' handler; got: ${registeredEvents.join(", ")}`);

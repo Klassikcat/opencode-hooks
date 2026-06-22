@@ -23,7 +23,7 @@ cd "<worktree>" && omp
 /start-work
 ```
 
-The `/start-work` input command reads `<worktree>/.omp/.plan-worktree`, locates `.omp/plans/<slug>-plan.md`, and rewrites the prompt into a self-contained execution instruction for the agent in that worktree. The current checkout is left untouched. Uncommitted files are not moved; the handoff warns when they exist.
+The `/start-work` slash command is registered with pi so it appears in the slash-command list. It also keeps an input-rewrite fallback for older command surfaces. The command reads `<worktree>/.omp/.plan-worktree`, locates `.omp/plans/<slug>-plan.md`, and rewrites/sends a self-contained execution instruction for the agent in that worktree. The current checkout is left untouched. Uncommitted files are not moved; the handoff warns when they exist.
 
 ## Loop guard
 
@@ -31,7 +31,7 @@ Branches under `omp/plan/*` are skipped during approval handoff. This prevents c
 
 ## Requirements & coupling
 
-- **pi / OMP runtime.** Uses pi's extension API (`pi.on("tool_result")`, `pi.on("tool_call")`, `pi.on("input")`, `ctx.sessionManager`, `ctx.hasUI`, `ctx.ui.notify`). Validated against OMP v16.x behavior; re-verify after upgrading.
+- **pi / OMP runtime.** Uses pi's extension API (`pi.registerCommand`, `pi.on("tool_result")`, `pi.on("tool_call")`, `pi.on("input")`, `ctx.sessionManager`, `ctx.hasUI`, `ctx.ui.notify`). Validated against OMP v16.x behavior; re-verify after upgrading.
 - **git worktree support.** Uses `git worktree add`, `git worktree list --porcelain`, and normal branch refs.
 - **UI plan approval.** The handoff only acts when `ctx.hasUI` is true and the source tool is `plan_approval`.
 

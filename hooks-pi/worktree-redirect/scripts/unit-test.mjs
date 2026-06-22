@@ -107,6 +107,28 @@ async function fireInput({ cwd, text = "/start-work" }) {
   return results;
 }
 
+async function fireRegisteredCommand({ cwd, args = "" }) {
+  const commands = new Map();
+  const sentMessages = [];
+  const pi = {
+    setLabel() { },
+    on() { },
+    registerCommand(name, options) {
+      commands.set(name, options);
+    },
+    sendUserMessage(message) {
+      sentMessages.push(message);
+    },
+  };
+  worktreeRedirect(pi);
+
+  const command = commands.get("start-work");
+  assert.ok(command, "expected /start-work to be registered");
+  assert.match(command.description, /copied plan/);
+  await command.handler(args, { cwd });
+  return sentMessages;
+}
+
 const tmp = await initRepo("wt-redirect", "main");
 try {
   const exec = args => git(tmp, args);
@@ -216,6 +238,11 @@ try {
   const suppliedPlanResult = await fireInput({ cwd: worktreePath, text: "/start-work .omp/plans/runtime-redirect-plan.md" });
   assert.equal(suppliedPlanResult.length, 1);
   assert.match(suppliedPlanResult[0].text, /Begin by reading \.omp\/plans\/runtime-redirect-plan\.md/);
+
+  const commandMessages = await fireRegisteredCommand({ cwd: worktreePath, args: ".omp/plans/runtime-redirect-plan.md" });
+  assert.equal(commandMessages.length, 1);
+  assert.match(commandMessages[0], /Start implementation now/);
+  assert.match(commandMessages[0], /Begin by reading \.omp\/plans\/runtime-redirect-plan\.md/);
 
   const missingMarkerResult = await fireInput({ cwd: e2eRoot });
   assert.equal(missingMarkerResult.length, 1);
