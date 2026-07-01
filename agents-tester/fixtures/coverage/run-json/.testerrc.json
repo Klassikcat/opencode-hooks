@@ -1,0 +1,4 @@
+{
+  "coverageCommand": "echo NOISE-OUT; echo NOISE-ERR 1>&2",
+  "coverageFile": "summary.json"
+}

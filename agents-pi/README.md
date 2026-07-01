@@ -19,8 +19,11 @@ Native pi agent definitions (distinct from the skills above) live in [`agents/`]
 
 - [`code-reviewer`](./agents/code-reviewer.md) — READ-ONLY completion reviewer. Checks changed code with LSP diagnostics, code review, and non-mutating formatter/linter checks; skips unavailable tooling explicitly. Declares `model: pi/slow`. This is the reviewer the [`completion-gate`](../hooks-pi/completion-gate) flow relies on.
 - [`document-specialist`](./agents/document-specialist.md) — direct external documentation lookup (official docs, API references, release notes). READ-ONLY. Declares `model: pi/smol`.
+- [`test-author`](./agents/test-author.md) — tester role that writes focused test files only; does not run suites or measure coverage. Declares `model: pi/default`.
+- [`test-runner`](./agents/test-runner.md) — READ-ONLY tester role that runs the detected suite through `agents-tester` and reports pass/fail/skipped. Declares `model: pi/smol`.
+- [`coverage-judge`](./agents/coverage-judge.md) — READ-ONLY tester role that runs coverage through `agents-tester` and enforces thresholds plus no-regression baselines. Declares `model: pi/default`.
 
-Both agents reference pi model roles (`pi/slow`, `pi/smol`). Define those roles in your pi config, plus `task.agentModelOverrides.code-reviewer` if you want to pin the reviewer model — see [`../hooks-pi/config.example.yml`](../hooks-pi/config.example.yml).
+These agents reference pi model roles (`pi/default`, `pi/slow`, `pi/smol`). Define those roles in your pi config, plus `task.agentModelOverrides.code-reviewer` if you want to pin the reviewer model — see [`../hooks-pi/config.example.yml`](../hooks-pi/config.example.yml). The tester agents are generated from [`../agents-tester/roles/`](../agents-tester/roles/); edit there and regenerate rather than hand-editing these files.
 
 ## Offload Layer
 

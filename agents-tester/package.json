@@ -1,0 +1,17 @@
+{
+  "name": "agents-tester",
+  "version": "0.1.0",
+  "description": "Cross-platform tester agents (author/runner/coverage-judge) with a deterministic run+coverage toolkit for pi, Claude Code, and opencode.",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "tester-run": "./bin/run-tests.mjs",
+    "tester-coverage": "./bin/coverage-gate.mjs",
+    "tester-generate-agents": "./bin/generate-agents.mjs"
+  },
+  "scripts": {
+    "check": "node --check bin/run-tests.mjs && node --check bin/coverage-gate.mjs && node --check bin/generate-agents.mjs && node bin/generate-agents.mjs --check && node --test && node scripts/smoke-test.mjs",
+    "test": "node --test"
+  },
+  "keywords": ["pi-package", "pi", "opencode", "claude-code", "agents", "testing", "coverage"]
+}

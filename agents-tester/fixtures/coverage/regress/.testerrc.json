@@ -1,0 +1,5 @@
+{
+  "coverageFile": "summary.json",
+  "baselineFile": "baseline.json",
+  "allowRegression": false
+}

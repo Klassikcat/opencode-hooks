@@ -1,0 +1,16 @@
+{
+  "name": "pi-test-runner-hook",
+  "version": "0.1.0",
+  "description": "Pi (oh-my-pi) extension: exposes a run_tests tool backed by the agents-tester toolkit",
+  "type": "module",
+  "main": "test-runner.js",
+  "exports": {
+    ".": "./test-runner.js"
+  },
+  "scripts": {
+    "check": "node --check test-runner.js && node scripts/smoke-test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
